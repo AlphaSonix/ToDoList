@@ -3,22 +3,58 @@ import https from 'https';
 import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { getDate } from './date.js'; 
+import { getDate } from './date.js';
+import { mongoose } from 'mongoose';
+import pkg from 'lodash';
 
 const app = express();
 app.use(express.static('public'));
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const _ = pkg; 
+//const mongoose = mongoose();
 
-const items = ["Shower", "Brush Teeth", "Make Breakfast"];
-const workItems = [];
+// const items = ["Shower", "Brush Teeth", "Make Breakfast"];
+// const workItems = [];
 
 app.set('view engine', 'ejs');
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.urlencoded({ extended: true }));
 
-app.get("/", function(req, res){
+mongoose.connect('mongodb://127.0.0.1/todolistDB')
+    .then(() => console.log('Connected!'));
 
-    const day = getDate();
+const itemsSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    }
+});
+
+const Item = mongoose.model("Item", itemsSchema);
+
+const item1 = new Item({
+    name: "Shower"
+});
+const item2 = new Item({
+    name: "Make breakfast"
+});
+const item3 = new Item({
+    name: "Study"
+});
+
+const itemsArr = [item1, item2, item3];
+
+const listSchema = {
+    name: String,
+    items: [itemsSchema]
+};
+
+const List = mongoose.model("List", listSchema);
+
+app.get("/", function (req, res) {
+
+    // const day = getDate();
+
     // const today = new Date();
 
     // const options = {
@@ -39,26 +75,115 @@ app.get("/", function(req, res){
     // } else {
     //     day = dayoftheWeek; 
     // }
+    // if (items.length === 0) {
+    //         Item.insertMany(itemsArr) 
+    //     .catch (function (err){
+    //     console.log(err);
+    //         }); 
 
-    res.render('list', {listTitle: day, newItems: items});
+    async function findItem() {
+
+        try {
+            const items = await Item.find();
+
+            if (items.length === 0) {
+                Item.insertMany(itemsArr)
+                res.redirect("/");
+            }
+            res.render('list', { listTitle: "Today", newItems: items });
+        } catch (e) {
+            console.log(e);
+        }
+    }
+    findItem();
     //res.send(); 
-})
+});
 
 app.post("/", function (req, res) {
-    let item = req.body.newTask; 
-    console.log(item);
-    if (req.body.list === "Work") {
-        workItems.push(item);
-        res.redirect("/work");
-    } else {
-        items.push(item);
+    const itemName = req.body.newTask;
+    const listName = req.body.list;
+
+    const item = new Item({
+        name: itemName
+    });
+
+    if (listName === "Today") {
+        item.save();
         res.redirect("/");
-    } 
+    } else {
+        List.findOne({name: listName})
+        .then (function (foundList){
+            foundList.items.push(item);
+            foundList.save();
+        })
+        .finally(
+            res.redirect("/" + listName)
+        )
+    };
+
+    // if (req.body.list === "Work") {
+    //     workItems.push(item);
+    //     res.redirect("/work");
+    // } else {
+    //     items.push(item);
+    //     res.redirect("/");
+    // } 
 })
 
-app.get("/work", function (req, res) {
-    res.render('list', {listTitle: "Work", newItems: workItems});
+app.post("/delete", function (req, res) {
+    const checkedItem = req.body.checkbox;
+    const listName = req.body.listName; 
+
+    if (listName === "Today") {
+        Item.deleteOne({ _id: checkedItem })
+        .finally(
+            res.redirect("/")
+        ) 
+    } else {
+        List.findOneAndUpdate({name: listName},{$pull: {items: {_id: checkedItem}}})
+        .then(function(foundList, err) {
+            if (!err) {
+                res.redirect("/" + listName);
+            }
+        });
+    }
+
+   
 })
+
+app.get("/:listName", function (req, res) {
+    const listName = _.capitalize(req.params.listName);
+
+    List.findOne({ name: listName })
+        .then(function (foundList) {
+            if (!foundList) {
+                //Create a new list
+                const list = new List({
+                    name: listName,
+                    items: itemsArr
+                });
+
+                list.save()
+                .then( function () { 
+                    console.log("saved!");
+                res.redirect("/" + listName); //redirect after saving
+                });          
+            } else {
+                //Show existing list
+                res.render('list', {listTitle: foundList.name, newItems: foundList.items});
+            }
+        })
+        .catch(function (err) {
+            console.log(err);
+        });
+
+
+
+})
+
+// app.get("/work", function (req, res) {
+//     res.render('list', {listTitle: "Work", newItems: workItems});
+// })
 
 app.get("/about", function (req, res) {
     res.render('aboutme');
@@ -70,6 +195,6 @@ app.get("/about", function (req, res) {
 //     res.redirect("/work")
 // })
 
-app.listen(3000,function(){
+app.listen(3000, function () {
     console.log("Communications succesful with port 3000");
 })

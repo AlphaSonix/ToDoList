@@ -1,24 +1,36 @@
 <%- include('header'); -%>
-  
+
     <div class="box" id="heading">
-     <% if (listTitle === "Saturday" || listTitle === "Sunday") { %>
-        <h1 style="color: purple"> <%= listTitle %> - ToDo List</h1>
-     <% } else { %>
-        <h1 style="color: blue"> <%= listTitle %> - ToDo List</h1>
-    <% } %>
+        <% if (listTitle==="Saturday" || listTitle==="Sunday" ) { %>
+            <h1 style="color: purple">
+                <%= listTitle %> - ToDo List
+            </h1>
+            <% } else { %>
+                <h1 style="color: blue">
+                    <%= listTitle %> - ToDo List
+                </h1>
+                <% } %>
     </div>
 
     <div class="box">
-            <% for (let i=0; i < newItems.length; i++) { %>
-               <div class="item">
-                <input type="checkbox">
-                    <p><%= newItems[i] %></p>
-               </div>
-           <% }; %>
-    <form class="item" action="/" method="post">
-        <input type="text" name="newTask" placeholder="Add New Task" autocomplete="off">
-        <button name="list" value="<%= listTitle %>" type="submit">+</button>
-    </form>
+        <% newItems.forEach(function(newItem) { %>
+            <form action="/delete" method="post">
+                <div class="item">
+                    <input type="checkbox" name="checkbox" value="<%= newItem._id %>" onChange = "this.form.submit()">
+                    <p>
+                        <%= newItem.name %>
+                    </p>
+                    <input type="hidden" name="listName" value="<%= listTitle %>"></input>
+                </div>
+
+            </form>
+
+            <% }); %>
+
+                <form class="item" action="/" method="post">
+                    <input type="text" name="newTask" placeholder="Add New Task" autocomplete="off">
+                    <button name="list" value="<%= listTitle %>" type="submit">+</button>
+                </form>
     </div>
 
     <%- include('footer'); -%>
