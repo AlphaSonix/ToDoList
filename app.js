@@ -20,7 +20,7 @@ const _ = pkg;
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 
-mongoose.connect('mongodb://127.0.0.1/todolistDB')
+mongoose.connect('mongodb+srv://jermain-admin:pBEY2qxOXmLgfBPm@cluster0.4bae75f.mongodb.net/todolistDB')
     .then(() => console.log('Connected!'));
 
 const itemsSchema = new mongoose.Schema({
@@ -115,10 +115,11 @@ app.post("/", function (req, res) {
         .then (function (foundList){
             foundList.items.push(item);
             foundList.save();
+            res.redirect("/" + listName);
         })
-        .finally(
-            res.redirect("/" + listName)
-        )
+        // .finally(
+        //     res.redirect("/" + listName)
+        // )
     };
 
     // if (req.body.list === "Work") {
@@ -141,7 +142,7 @@ app.post("/delete", function (req, res) {
         ) 
     } else {
         List.findOneAndUpdate({name: listName},{$pull: {items: {_id: checkedItem}}})
-        .then(function(foundList, err) {
+        .then(function(err) {
             if (!err) {
                 res.redirect("/" + listName);
             }
@@ -195,6 +196,8 @@ app.get("/about", function (req, res) {
 //     res.redirect("/work")
 // })
 
-app.listen(3000, function () {
-    console.log("Communications succesful with port 3000");
+const port = process.env.PORT || 3000
+
+app.listen(port, function () {
+    console.log("Communications succesful!");
 })
