@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { getDate } from './date.js';
 import { mongoose } from 'mongoose';
 import pkg from 'lodash';
+import 'dotenv/config';
 
 const app = express();
 app.use(express.static('public'));
@@ -20,7 +21,7 @@ const _ = pkg;
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 
-mongoose.connect('mongodb+srv://jermain-admin:pBEY2qxOXmLgfBPm@cluster0.4bae75f.mongodb.net/todolistDB')
+mongoose.connect('mongodb+srv://' + process.env.DB_USERNAME + ':' + process.env.DB_PASSWORD + '@cluster0.4bae75f.mongodb.net/todolistDB')
     .then(() => console.log('Connected!'));
 
 const itemsSchema = new mongoose.Schema({
@@ -33,13 +34,13 @@ const itemsSchema = new mongoose.Schema({
 const Item = mongoose.model("Item", itemsSchema);
 
 const item1 = new Item({
-    name: "Shower"
+    name: "Welcome to To-Do List!"
 });
 const item2 = new Item({
-    name: "Make breakfast"
+    name: "Add a task to be carried out"
 });
 const item3 = new Item({
-    name: "Study"
+    name: "<-- Check off tasks with this"
 });
 
 const itemsArr = [item1, item2, item3];
