@@ -21,8 +21,12 @@ const _ = pkg;
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 
-mongoose.connect('mongodb+srv://' + process.env.DB_USERNAME + ':' + process.env.DB_PASSWORD + '@cluster0.4bae75f.mongodb.net/todolistDB')
-    .then(() => console.log('Connected!'));
+main().catch(err => console.log(err));
+async function main(){
+await mongoose.connect('mongodb+srv://' + process.env.DB_USERNAME + ':' + process.env.DB_PASSWORD + '@cluster0.4bae75f.mongodb.net/todolistDB')   
+}
+
+    //.then(() => console.log('Connected!'));
 
 const itemsSchema = new mongoose.Schema({
     name: {
